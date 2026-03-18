@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sürücü Kayıt Sistemi</title>
+<style>
+  body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(135deg, #000000, #1c1c1c); color: white; min-height: 100vh; }
+  .container { max-width: 500px; margin: 20px auto; background: #111; padding: 25px; border-radius: 15px; box-shadow: 0 0 25px rgba(255, 204, 0, 0.2); border: 1px solid #222; }
+  .logo { text-align: center; margin-bottom: 20px; }
+  .logo img { width: 120px; border-radius: 10px; }
+  h2 { text-align: center; color: #ffcc00; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* HATA EFEKTİ - KIRMIZI VE SALLANMA */
+  .error-input {
+    border: 2px solid #ff4444 !important;
+    background: rgba(255, 68, 68, 0.05) !important;
+    animation: shake 0.3s ease-in-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .section-title { margin-top: 25px; color: #ffcc00; font-weight: bold; font-size: 16px; border-left: 4px solid #ffcc00; padding-left: 10px; margin-bottom: 15px; }
+  
+  .input-group { position: relative; width: 100%; margin-bottom: 12px; }
+  input, select { width: 100%; padding: 14px; border-radius: 10px; border: 2px solid #333; font-size: 15px; box-sizing: border-box; outline: none; background: #222; color: white; transition: 0.3s; }
+  input:focus, select:focus { border-color: #ffcc00; background: #2a2a2a; }
+
+  /* Dropdown Dil Seçimi */
+  .dropdown { position: relative; margin-bottom: 25px; }
+  .dropdown-btn { width: 100%; background: #222; color: white; font-weight: bold; border-radius: 10px; padding: 12px; text-align: left; display: flex; align-items: center; cursor: pointer; border: 2px solid #333; }
+  .dropdown-btn img { width: 24px; height: 16px; margin-right: 12px; object-fit: cover; }
+  .dropdown-content { display: none; position: absolute; background: #222; width: 100%; max-height: 250px; border-radius: 10px; z-index: 1000; margin-top: 5px; border: 2px solid #444; overflow: hidden; }
+  .dropdown-content div { padding: 12px; display: flex; align-items: center; cursor: pointer; border-bottom: 1px solid #333; }
+  .dropdown-content div:hover { background: #333; }
+  .dropdown-content img { width: 24px; height: 16px; margin-right: 12px; }
+
+  /* Telefon Formatı */
+  .phone-wrapper { display: flex; align-items: stretch; width: 100%; }
+  .phone-prefix { background: #ffcc00; color: black; padding: 0 15px; border-radius: 10px 0 0 10px; display: flex; align-items: center; font-weight: bold; }
+  .phone-input { flex: 1; border-radius: 0 10px 10px 0; }
+
+  /* Dosya Yükleme Alanı */
+  .file-box { margin-top: 15px; }
+  .file-label { font-size: 13px; color: #aaa; margin-bottom: 6px; display: block; }
+  .custom-file-upload { display: flex; align-items: center; justify-content: space-between; background: #222; border: 2px dashed #444; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.3s; }
+  .custom-file-upload:hover { border-color: #ffcc00; }
+  .file-name { font-size: 13px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+  .upload-btn-text { font-size: 12px; background: #ffcc00; color: black; padding: 6px 12px; border-radius: 6px; font-weight: bold; }
+  input[type="file"] { display: none; }
+
+  button#submitBtn { width: 100%; background: #ffcc00; color: black; font-weight: bold; cursor: pointer; transition: 0.4s; margin-top: 30px; border: none; padding: 16px; border-radius: 10px; font-size: 17px; }
+  button:hover { background: #e6b800; transform: translateY(-2px); }
+  button:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+  #successScreen { display: none; text-align: center; padding: 60px 20px; }
+  #msg { text-align: center; margin-top: 15px; font-weight: bold; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="logo"><img src="logo/logo.png.jpg" alt="Logo"></div>
+
+  <div id="formSection">
+    <div class="dropdown">
+      <div class="dropdown-btn" id="dropdownBtn">
+        <img id="selectedFlag" src="flags/ge.png.png"> 
+        <span id="selectedLangText">ქართული</span>
+      </div>
+      <div class="dropdown-content" id="dropdownContent">
+        <div onclick="selectLang('ge', 'flags/ge.png.png')"><img src="flags/ge.png.png"> ქართული</div>
+        <div onclick="selectLang('az', 'flags/az.png.png')"><img src="flags/az.png.png"> Azərbaycan</div>
+        <div onclick="selectLang('ru', 'flags/ru.png.webp')"><img src="flags/ru.png.webp"> Русский</div>
+        <div onclick="selectLang('en', 'flags/en.png.webp')"><img src="flags/en.png.webp"> English</div>
+      </div>
+    </div>
+
+    <h2 id="formTitle"></h2>
+    
+    <form id="form" novalidate>
+      <div class="section-title" id="personalTitle"></div>
+      <div class="input-group"><input type="text" id="name" placeholder=" " required></div>
+      <div class="input-group"><input type="text" id="surname" placeholder=" " required></div>
+      <div class="input-group">
+        <div class="phone-wrapper">
+          <div class="phone-prefix">+995</div>
+          <input type="text" id="phone" class="phone-input" placeholder=" " required>
+        </div>
+      </div>
+      <div class="input-group"><input type="text" id="license" placeholder=" " required></div>
+
+      <div class="section-title" id="vehicleTitle"></div>
+      <div class="input-group"><input type="text" id="brand" placeholder=" " required></div>
+      <div class="input-group"><input type="text" id="model" placeholder=" " required></div>
+      <div class="input-group"><input type="text" id="color" placeholder=" " required></div>
+      
+      <div class="input-group">
+        <select id="year" required></select>
+      </div>
+      
+      <div class="input-group"><input type="text" id="tex" placeholder=" " required></div>
+
+      <div class="section-title" id="documentsTitle"></div>
+      
+      <div class="file-box">
+        <label class="file-label" id="label_photo1"></label>
+        <label class="custom-file-upload" for="photo1" id="box_photo1">
+          <span class="file-name" id="name_photo1">...</span>
+          <span class="upload-btn-text" id="btn_photo1"></span>
+        </label>
+        <input type="file" id="photo1" onchange="fileChanged(this, 'name_photo1', 'box_photo1')" accept="image/*" required>
+      </div>
+
+      <div class="file-box">
+        <label class="file-label" id="label_photo2"></label>
+        <label class="custom-file-upload" for="photo2" id="box_photo2">
+          <span class="file-name" id="name_photo2">...</span>
+          <span class="upload-btn-text" id="btn_photo2"></span>
+        </label>
+        <input type="file" id="photo2" onchange="fileChanged(this, 'name_photo2', 'box_photo2')" accept="image/*" required>
+      </div>
+
+      <div class="file-box">
+        <label class="file-label" id="label_photo3"></label>
+        <label class="custom-file-upload" for="photo3" id="box_photo3">
+          <span class="file-name" id="name_photo3">...</span>
+          <span class="upload-btn-text" id="btn_photo3"></span>
+        </label>
+        <input type="file" id="photo3" onchange="fileChanged(this, 'name_photo3', 'box_photo3')" accept="image/*" required>
+      </div>
+
+      <button type="submit" id="submitBtn"></button>
+    </form>
+    <p id="msg"></p>
+  </div>
+
+  <div id="successScreen">
+    <h1 style="color:#00ff88; font-size: 70px;">✔</h1>
+    <h2 id="successHeading" style="color:#ffcc00"></h2>
+    <p id="successText" style="line-height: 1.6;"></p>
+  </div>
+</div>
+
+<script>
+// TELEGRAM BILGILERI
+const TELEGRAM_TOKEN = "8202875733:AAH3UJdoxM3lqKPYqj8Xr728qck9EZrTj3M"; 
+const CHAT_ID = "7240796649"; 
+
+const texts = {
+  ge: { name: "ქართული", formTitle: "მძღოლის რეგისტრაცია", personal: "პირადი ინფორმაცია", vehicle: "მანქანის ინფორმაცია", documents: "დოკუმენტები", submit: "რეგისტრაცია", required:"შეავსეთ ყველა ველი!", successHead: "გილოცავთ!", successBody: "რეგისტრაცია წარმატებით დასრულდა!", file1: "მართვის მოწმობის წინა", file2: "ტექპასპორტის წინა", file3: "ტექპასპორტის უკანა", selectBtn: "არჩევა", noFile: "ფაილი არ არის", yearLabel: "წელი" },
+  az: { name: "Azərbaycan", formTitle: "Sürücü Qeydiyyatı", personal: "Şəxsi Məlumat", vehicle: "Avtomobil Məlumatları", documents: "Sənədlər", submit: "Qeydiyyat", required:"Zorunlu alanları doldurun!", successHead: "Təbriklər!", successBody: "Qeydiyyatınız uğurla tamamlandı!", file1: "Ehliyyətin önü", file2: "Texpasportun önü", file3: "Texpasportun arxası", selectBtn: "Seç", noFile: "Fayl seçilməyib", yearLabel: "İl" },
+  ru: { name: "Русский", formTitle: "Регистрация Водителя", personal: "Личная информация", vehicle: "Информация об автомобиле", documents: "Документы", submit: "Зарегистрироваться", required:"Заполните обязательные поля!", successHead: "Поздравляем!", successBody: "Регистрация успешно завершена!", file1: "Лицевая В/У", file2: "Лицевая техпаспорта", file3: "Оборот техпаспорта", selectBtn: "Выбрать", noFile: "Файл не выбран", yearLabel: "Год" },
+  en: { name: "English", formTitle: "Driver Registration", personal: "Personal Information", vehicle: "Vehicle Information", documents: "Documents", submit: "Register", required:"Please fill all fields!", successHead: "Congratulations!", successBody: "Registration completed successfully!", file1: "License Front", file2: "Texpassport Front", file3: "Texpassport Back", selectBtn: "Choose", noFile: "No file chosen", yearLabel: "Year" }
+};
+
+const placeholders = {
+  ge: {name:"სახელი", surname:"გვარი", phone:"ტელეფონი", license:"მოწმობის კოდი", brand:"ბრენდი", model:"მოდელი", color:"ფერი", tex:"ტექპასპორტი"},
+  az: {name:"Ad", surname:"Soyad", phone:"Telefon", license:"Kod", brand:"Marka", model:"Model", color:"Rəng", tex:"Texpasport"},
+  ru: {name:"Имя", surname:"Фамилия", phone:"Телефон", license:"Код", brand:"Марка", model:"Модель", color:"Цвет", tex:"Техпаспорт"},
+  en: {name:"Name", surname:"Surname", phone:"Phone", license:"Code", brand:"Brand", model:"Model", color:"Color", tex:"Texpassport"}
+};
+
+let currentLang = "ge";
+
+function selectLang(lang, flag) {
+  currentLang = lang;
+  document.getElementById("selectedFlag").src = flag;
+  document.getElementById("selectedLangText").innerText = texts[lang].name;
+  updateUI();
+  updateYearList();
+  document.getElementById("dropdownContent").style.display = "none";
+}
+
+function updateYearList() {
+  const yearSelect = document.getElementById("year");
+  yearSelect.innerHTML = "";
+  let def = document.createElement("option");
+  def.value = ""; def.text = texts[currentLang].yearLabel; def.disabled = true; def.selected = true;
+  yearSelect.appendChild(def);
+  for (let y = 2026; y >= 1995; y--) {
+    let opt = document.createElement("option");
+    opt.value = y; opt.text = y;
+    yearSelect.appendChild(opt);
+  }
+}
+
+function updateUI() {
+  const t = texts[currentLang];
+  const p = placeholders[currentLang];
+  document.getElementById("formTitle").innerText = t.formTitle;
+  document.getElementById("personalTitle").innerText = t.personal;
+  document.getElementById("vehicleTitle").innerText = t.vehicle;
+  document.getElementById("documentsTitle").innerText = t.documents;
+  document.getElementById("submitBtn").innerText = t.submit;
+  document.getElementById("successHeading").innerText = t.successHead;
+  document.getElementById("successText").innerText = t.successBody;
+  document.getElementById("label_photo1").innerText = t.file1;
+  document.getElementById("label_photo2").innerText = t.file2;
+  document.getElementById("label_photo3").innerText = t.file3;
+  document.getElementById("btn_photo1").innerText = t.selectBtn;
+  document.getElementById("btn_photo2").innerText = t.selectBtn;
+  document.getElementById("btn_photo3").innerText = t.selectBtn;
+
+  document.getElementById("name").placeholder = p.name;
+  document.getElementById("surname").placeholder = p.surname;
+  document.getElementById("phone").placeholder = p.phone;
+  document.getElementById("license").placeholder = p.license;
+  document.getElementById("brand").placeholder = p.brand;
+  document.getElementById("model").placeholder = p.model;
+  document.getElementById("color").placeholder = p.color;
+  document.getElementById("tex").placeholder = p.tex;
+}
+
+function fileChanged(input, nameId, boxId) {
+  const box = document.getElementById(boxId);
+  if (input.files[0]) {
+    document.getElementById(nameId).innerText = input.files[0].name;
+    document.getElementById(nameId).style.color = "#00ff88";
+    box.classList.remove("error-input");
+  }
+}
+
+document.getElementById("dropdownBtn").onclick = (e) => {
+  e.stopPropagation();
+  let c = document.getElementById("dropdownContent");
+  c.style.display = c.style.display === "block" ? "none" : "block";
+};
+
+const phoneInput = document.getElementById("phone");
+phoneInput.oninput = (e) => {
+  let v = e.target.value.replace(/\D/g,'').slice(0,9);
+  let f = v;
+  if(v.length>2) f = v.slice(0,3)+' '+v.slice(3);
+  if(v.length>5) f = v.slice(0,3)+' '+v.slice(3,5)+' '+v.slice(5);
+  if(v.length>7) f = v.slice(0,3)+' '+v.slice(3,5)+' '+v.slice(5,7)+' '+v.slice(7);
+  e.target.value = f;
+  if(v.length === 9) phoneInput.classList.remove("error-input");
+};
+
+// FORM SUBMIT - HATA KONTROLLÜ
+document.getElementById("form").onsubmit = async function(e){
+  e.preventDefault();
+  const btn = document.getElementById("submitBtn");
+  const msgLabel = document.getElementById("msg");
+  let hasError = false;
+
+  // 1. Yazı alanlarını kontrol et
+  const reqs = ["name", "surname", "license", "brand", "model", "color", "year", "tex"];
+  reqs.forEach(id => {
+    const el = document.getElementById(id);
+    if(!el.value || el.value.trim() === "") { 
+      el.classList.add("error-input"); hasError = true; 
+    } else { el.classList.remove("error-input"); }
+    el.addEventListener('input', () => el.classList.remove("error-input"));
+  });
+
+  // 2. Telefonu kontrol et
+  if(phoneInput.value.replace(/\s/g,'').length !== 9) {
+    phoneInput.classList.add("error-input"); hasError = true;
+  }
+
+  // 3. Dosyaları kontrol et
+  ["photo1", "photo2", "photo3"].forEach(id => {
+    const inp = document.getElementById(id);
+    const box = document.getElementById("box_" + id);
+    if(!inp.files[0]) { box.classList.add("error-input"); hasError = true; }
+    else { box.classList.remove("error-input"); }
+  });
+
+  if(hasError) {
+    msgLabel.style.color = "#ff4444";
+    msgLabel.innerText = texts[currentLang].required;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return;
+  }
+
+  btn.disabled = true; btn.innerText = "...";
+  msgLabel.innerText = "";
+
+  try {
+    const cap = `🚗 *YENİ KAYIT*\n👤 ${document.getElementById("name").value} ${document.getElementById("surname").value}\n📞 +995 ${phoneInput.value}\n🆔 ${document.getElementById("license").value}\n🚘 ${document.getElementById("brand").value} ${document.getElementById("model").value} (${document.getElementById("year").value})\n🎨 ${document.getElementById("color").value}\n📄 ${document.getElementById("tex").value}`;
+    
+    await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: CHAT_ID, text: cap, parse_mode: 'Markdown' })
+    });
+
+    for (let id of ["photo1", "photo2", "photo3"]) {
+      let fd = new FormData();
+      fd.append('chat_id', CHAT_ID);
+      fd.append('photo', document.getElementById(id).files[0]);
+      await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendPhoto`, { method: 'POST', body: fd });
+    }
+    document.getElementById("formSection").style.display = "none";
+    document.getElementById("successScreen").style.display = "block";
+    window.scrollTo(0,0);
+  } catch (err) { 
+    msgLabel.innerText = "Error! Check Connection."; 
+    btn.disabled = false; 
+    btn.innerText = texts[currentLang].submit;
+  }
+};
+
+window.onload = () => { selectLang('ge', 'flags/ge.png.png'); };
+window.onclick = () => document.getElementById("dropdownContent").style.display = "none";
+</script>
+</body>
+</html>
